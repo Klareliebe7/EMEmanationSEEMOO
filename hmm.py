@@ -1,7 +1,11 @@
 import pandas as pd
 from itertools import islice
 from collections import Counter
-#############################words parser
+
+file_path = "C:/Users/97053/Desktop/Harry Potter.txt"
+bksp_rate = 0
+
+
 trace_dict = {
 21111111111: {'<non-US-1>'},
 21111111121: {'<Release key>'},
@@ -39,7 +43,8 @@ trace_dict = {
 21212112111: {'4','y'},
 21212121111: {'q'},
 21212121211: {'='}}
-filePath = "C:/Users/97053/Desktop/Harry Potter.txt"
+
+
 
 removed_items ={'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','NL','Alt+SysRq','Tab',
                 '<Release key>','<non-US-1>','Alt_L','SHIFT_R','CTRL_L','SL','KP+','KP.','KP-','’'}
@@ -211,11 +216,11 @@ def get_trans_mat_and_obs(trace_dict:dict, not_in_table:set, removed_items:set):
     states_count = set()
     for key in trace_dict:
         states_count |= trace_dict[key]
-    print("states_in_table:"+str(len(states_count)))
-    print("not_in_table:"+str(len(not_in_table)))
-    print("removed_items:"+str(len(removed_items)))
+    # print("states_in_table:"+str(len(states_count)))
+    # print("not_in_table:"+str(len(not_in_table)))
+    # print("removed_items:"+str(len(removed_items)))
     states_count |= not_in_table    
-    print("states_count:"+str(len(states_count)))
+    # print("states_count:"+str(len(states_count)))
     dictInDict = dict.fromkeys(states_count, 0) 
     count_matrix = dict.fromkeys(states_count, dictInDict) 
     states_trans = set()
@@ -223,14 +228,14 @@ def get_trans_mat_and_obs(trace_dict:dict, not_in_table:set, removed_items:set):
         states_trans |= trace_dict[key]
     for key in removed_items:
         states_trans.remove(key)
-    print("states_trans:"+str(len(states_trans)))
+    # print("states_trans:"+str(len(states_trans)))
     _ = dict.fromkeys(states_trans, 0) 
     transition_empty_mat = dict.fromkeys(states_trans, _) 
     states = list(states_trans)
     
     # observations = [_ for _ in]
-    print('observations'+str(observations))
-    print('states_trans'+str(states_trans))
+    # print('observations'+str(observations))
+    # print('states_trans'+str(states_trans))
     
     return states, observations, transition_empty_mat, count_matrix
 def fill_trans_mat(count_mat,trans_mat:dict,bksp,states):
@@ -354,7 +359,7 @@ def viterbi(obs, states, start_p, trans_p, emit_p):
         previous = V[t + 1][previous]["prev"]
                    
 
-    print ("The steps of states are " + " ".join(opt) + " with highest probability of %s" % max_prob)
+    print ("The inference hidden states are:\n" + " ".join(opt))
 
 def dptable(V):
 #####################################################################################################################
@@ -369,7 +374,7 @@ def dptable(V):
 
 if __name__ == '__main__':
     states, observations, transition_empty, count_matrix = get_trans_mat_and_obs(trace_dict, not_in_table, removed_items)
-    with open(filePath,'r', encoding='UTF-8') as handle:
+    with open(file_path,'r', encoding='UTF-8') as handle:
         f = handle.read()
     ungrade_str = f if len(f)%2 == 1 else f[:-1]
     freqs = get_bigram_freq(ungrade_str)# if handle.read()%2 ==0 else handle.read()[:-1]) 
@@ -377,7 +382,7 @@ if __name__ == '__main__':
     count_matrix = get_count_matrix(freqs,count_matrix)
     # print(count_matrix)
     #fill transiton matrix based on count matrix & bksp prob
-    start_probability, transition_probability = fill_trans_mat(count_matrix,transition_empty,0.01,states)
+    start_probability, transition_probability = fill_trans_mat(count_matrix,transition_empty,bksp_rate,states)
     
     ave_start_probability = get_ave_start_prob(states)
     
@@ -385,6 +390,10 @@ if __name__ == '__main__':
     
     states = tuple(states)
     observations = tuple(observations)
+    
+    
+    
+###################################################################################################################################    
     obs = [21121121111,21121112111,21111121111,21121111211,21112112111,21121121111,21211211211,21112112111,21111121111,21211212111,21112112111]
     #shakspeare
     viterbi(obs,
