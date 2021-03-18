@@ -39,10 +39,11 @@ trace_dict = {
 21212112111: {'4','y'},
 21212121111: {'q'},
 21212121211: {'='}}
-filePath = "C:/Users/97053/Desktop/originText.txt"
+filePath = "C:/Users/97053/Desktop/Harry Potter.txt"
 
 removed_items ={'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','NL','Alt+SysRq','Tab',
                 '<Release key>','<non-US-1>','Alt_L','SHIFT_R','CTRL_L','SL','KP+','KP.','KP-','’'}
+
 
 not_in_table = {'z','\n'}
 def get_key (dictionary, value):
@@ -258,11 +259,17 @@ def fill_trans_mat(count_mat,trans_mat:dict,bksp,states):
         for j, value in row.iteritems():
             if count_mat.loc[i,'Col_sum'] != 0:
                 dftrans_mat.loc[i,j] =  count_mat.loc[i,j]/count_mat.loc[i,'Col_sum']*rest_prob
+                
             else:
                 dftrans_mat.loc[i,j] = 0
+            if i == 'Space':
+                dftrans_mat.loc['Space',j] =  count_mat.loc[' ',j]/count_mat.loc[' ','Col_sum']*rest_prob
+            elif j == 'Space':
+                dftrans_mat.loc[i,'Space'] =  count_mat.loc[i,' ']/count_mat.loc[i,'Col_sum']*rest_prob
+           
     for l in dftrans_mat:
         dftrans_mat.loc['Bksp',l] = bksp/num_tran_state
-        dftrans_mat.loc[l,'Bksp'] = bksp/num_tran_state
+        dftrans_mat.loc[l,'Bksp'] = bksp*100
     dftrans_mat.fillna(0, inplace = True)
     set(states)
     start_probability = dict()
@@ -293,52 +300,72 @@ def get_emission_prob(states, observation, trace_dict):
     st_dict = dict.fromkeys(states, 0)
     em_mat = dict.fromkeys(observation, st_dict)
     dfem_mat=pd.DataFrame(em_mat)
-    print(dfem_mat)
+    # print(dfem_mat)
     for i in states:
-        print(i)
-        print(int(get_key(trace_dict,i)))
+        # print(i)
+        # print(int(get_key(trace_dict,i)))
         dfem_mat[int(get_key(trace_dict,i))][i] = 1
-    print(dfem_mat)    
+    # print(dfem_mat)    
     return dfem_mat
 
-def Viterbit(obs, states, s_pro, t_pro, e_pro):
-    path = { s:[] for s in states} # init path: path[s] represents the path ends with s
-    curr_pro = {}
-    for s in states:
-        curr_pro[s] = s_pro[s]*e_pro[obs[0]][s]
-    for i in range(1, len(obs)):
-        last_pro = curr_pro
-        curr_pro = {}
-        for curr_state in states:
-            max_pro, last_sta = max(((last_pro[last_state]*t_pro[curr_state][last_state]*e_pro[obs[i]][curr_state], last_state) 
- 				                       for last_state in states))
-            curr_pro[curr_state] = max_pro
-            path[curr_state].append(last_sta)
+def viterbi(obs, states, start_p, trans_p, emit_p):
+#####################################################################################################################
+# This function is the example function in wikipedia.
+# https://en.wikipedia.org/wiki/Viterbi_algorithm
+# Thanks to the writer and editors of this article
+#####################################################################################################################
+    V = [{}]
+    for st in states:
+        V[0][st] = {"prob": start_p[st] * emit_p[obs[0]][st], "prev": None}
+    # Run Viterbi when t > 0
+    for t in range(1, len(obs)):
+        V.append({})
+        for st in states:
+            max_tr_prob = V[t - 1][states[0]]["prob"] * trans_p[st][states[0]]
+            prev_st_selected = states[0]
+            for prev_st in states[1:]:
+                tr_prob = V[t - 1][prev_st]["prob"] * trans_p[st][prev_st]
+                if tr_prob > max_tr_prob:
+                    max_tr_prob = tr_prob
+                    prev_st_selected = prev_st
 
- 	# find the final largest probability
-    max_pro = -1
-    max_path = None
-    for s in states:
-        path[s].append(s)
-        if curr_pro[s] > max_pro:
-            max_path = path[s]
-            max_pro = curr_pro[s]
-  		# print '%s: %s'%(curr_pro[s], path[s]) # different path and their probability
-    return max_path
+            max_prob = max_tr_prob * emit_p[obs[t]][st]
+            V[t][st] = {"prob": max_prob, "prev": prev_st_selected}
+
+    # for line in dptable(V):
+    #     print(line)
+
+    opt = []
+    max_prob = 0.0
+    best_st = None
+    # Get most probable state and its backtrack
+    for st, data in V[-1].items():
+        if data["prob"] > max_prob:
+            max_prob = data["prob"]
+            best_st = st
+    opt.append(best_st)
+
+    previous = best_st
+
+    # Follow the backtrack till the first observation
+    for t in range(len(V) - 2, -1, -1):
         
+        opt.insert(0, V[t + 1][previous]["prev"])
+        previous = V[t + 1][previous]["prev"]
+                   
 
+    print ("The steps of states are " + " ".join(opt) + " with highest probability of %s" % max_prob)
 
-
-
-# transition_probability = {
-#    'Healthy' : {'Healthy': 0.7, 'Fever': 0.3},
-#    'Fever' :   {'Healthy': 0.4, 'Fever': 0.6},
-#    }
-# emission_probability = { 不用转
-#    'Healthy' : {'normal': 0.5, 'cold': 0.4, 'dizzy': 0.1},
-#    'Fever'   : {'normal': 0.1, 'cold': 0.3, 'dizzy': 0.6},
-#    }
-
+def dptable(V):
+#####################################################################################################################
+# This function is the example function in wikipedia.
+# https://en.wikipedia.org/wiki/Viterbi_algorithm
+# Thanks to the writer and editors of this article
+#####################################################################################################################
+    # Print a table of steps from dictionary
+    yield " ".join(("%12d" % i) for i in range(len(V)))
+    for state in V[0]:
+        yield "%.7s: " % state + " ".join("%.7s" % ("%f" % v[state]["prob"]) for v in V)
 
 if __name__ == '__main__':
     states, observations, transition_empty, count_matrix = get_trans_mat_and_obs(trace_dict, not_in_table, removed_items)
@@ -350,19 +377,36 @@ if __name__ == '__main__':
     count_matrix = get_count_matrix(freqs,count_matrix)
     # print(count_matrix)
     #fill transiton matrix based on count matrix & bksp prob
-    start_probability, transition_probability = fill_trans_mat(count_matrix,transition_empty,0.1,states)
+    start_probability, transition_probability = fill_trans_mat(count_matrix,transition_empty,0.01,states)
     
     ave_start_probability = get_ave_start_prob(states)
     
     emission_probability = get_emission_prob(states,observations,trace_dict)
     
-    print(len(states))
-    print(len(observations))
-    print(len(transition_probability))
-    print(len(start_probability))
-    print(len(ave_start_probability))
-    print(len(emission_probability))
     states = tuple(states)
     observations = tuple(observations)
     obs = [21121121111,21121112111,21111121111,21121111211,21112112111,21121121111,21211211211,21112112111,21111121111,21211212111,21112112111]
-    print (Viterbit(obs, states, start_probability, transition_probability, emission_probability))
+    #shakspeare
+    viterbi(obs,
+            states,
+            ave_start_probability,
+            transition_probability,
+            emission_probability)
+    obs = [21121121111, 21121112111, 21111121111, 21121111211, 21112112111, 21121121111, 21211211211, 21112112111, 21111121111, 21211212111, 21112112111, 21211212111, 21211121111, 21111121111, 21121121111, 21211212111, 21121212111, 21112112111, 21211212111, 21121121111, 21212112111, 21211212111, 21121111211, 21211112111, 21121121111, 21112112111, 21211112111, 21111112111, 21211212111, 21112112111]
+    viterbi(obs,
+            states,
+            ave_start_probability,
+            transition_probability,
+            emission_probability)
+    obs =[21211211211, 21111121111, 21121121111, 21121121111, 21211121111, 21112111211, 21211212111, 21121112111]    
+    viterbi(obs,
+            states,
+            ave_start_probability,
+            transition_probability,
+            emission_probability)
+    obs = [21121112111, 21112112111, 21121211211, 21121211211, 21112111211]
+    viterbi(obs,
+            states,
+            ave_start_probability,
+            transition_probability,
+            emission_probability)
