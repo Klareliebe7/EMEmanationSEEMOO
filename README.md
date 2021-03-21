@@ -1,14 +1,20 @@
 # EMEmanationSEEMOO
+Keyboard EM Emanations side channel attack 
+Zhengkun Li Niklas Miller Erik Kubaczka
 
-Possible variables:
+Variables:
 
-bksp_rate: the speculated rate of person under attak, default: 0(0%percent chance of typo)
+bksp_rate: 
+The speculated rate of person under attak, default: 0(0%percent chance of typo)
 
-file_path: the imported article in form of txt: default: Harry Potter 1 2 3.(Can be changed based on the information of person under attack, if no such information avaliable, a really long article could work)
+file_path: 
+The imported article in form of txt: default: Harry Potter 1 2 3.(Can be changed based on the information of person under attack, if no such information avaliable, a really long article could work)
 
-test_file_path: imported article in form of txt: default: introduction for Shakspeare. This file is used to generate the evaluation.
+test_file_path: 
+Imported article in form of txt: default: introduction for Shakspeare. This file is used to generate the evaluation.
 
-evaluation_switch: Wether go with the evaluation: default: True. Caution, this evaluation process will cause a lot of time. If it's not necessary please set it as Faulse.
+evaluation_switch: 
+Wether go with the evaluation: default: True. Caution, this evaluation process will cause a lot of time. If it's not necessary please set it as Faulse.
 
 
 
@@ -27,5 +33,9 @@ The inference will be printed as :
 The inference hidden states are:
 s h a k e s p e a r e
 
-
+Requirments
+pandas
+itertools
+collections
+matplotlib
 

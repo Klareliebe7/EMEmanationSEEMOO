@@ -2,9 +2,10 @@ import pandas as pd
 from itertools import islice
 from collections import Counter
 
-file_path = "C:/Users/97053/Desktop/Harry Potter.txt"
-test_file_path = "C:/Users/97053/Desktop/originText.txt"
+file_path = "./Harry Potter.txt"
+test_file_path = "./originText.txt"
 bksp_rate = 0
+evaluation_switch = True
 [21111212111, 21121112111, 21112112111, 21211212111, 21121112111, 21111112111, 21211212111, 21121121111, 21121211211, 21112112111, 21121121111, 21212112111, 21121121111]
 
 trace_dict = {
@@ -483,43 +484,44 @@ if __name__ == '__main__':
             emission_probability)
     
 ####################################################### evaluation ##########################################################################################
-    accuracy = {}
-    for length in [3,5,10,15,20,30,40,50,70,90]:
-        with open(test_file_path,'r', encoding='UTF-8') as handle:
-            f = handle.read(130)
-            sentence_list = []
-            a = f.split(' ',1)
-            sentence_list.append(a[1][0:length])
-            while len(f)!= 0:
-                 f = handle.read(120)
-                 a = f.split(' ',1)
-                 try:
-                     sentence_list.append(a[1][0:length])
-                 except:
-                     print("\n")
-        correct_count_sum = 0
-        count_sum = 0
-        i = 0
-        for sent in sentence_list:
-            obs = falling_trace_gen(sent)
-            comp_list = keystroke_trace_gen(sent)
-            try :
-                inference_list = viterbi(obs,states,ave_start_probability,transition_probability,emission_probability)
-                a , b = compare_list(comp_list, inference_list)
-                print(comp_list)
-                print(inference_list)
-                if a != 0:
-                    i +=1
-                    correct_count_sum += a
-                    count_sum += b
-                print(f"corret inferenz: {a} total length: {b} accuracy:{a/b}")
-            except:
-                print("")
-            if i ==20:
-                break
-        print(f"corret inferenz: {correct_count_sum} total length: {count_sum} accuracy:{correct_count_sum/count_sum}")
-        accuracy[length] = {'inferenz': correct_count_sum,'length':count_sum,'accuracy':correct_count_sum/count_sum}
-    for i in accuracy:
-        print(f"input length {i}:{accuracy[i]}")
+    if evaluation_switch == True:
+        accuracy = {}
+        for length in [3,5,10,15,20,30,40,50,70,90]:
+            with open(test_file_path,'r', encoding='UTF-8') as handle:
+                f = handle.read(130)
+                sentence_list = []
+                a = f.split(' ',1)
+                sentence_list.append(a[1][0:length])
+                while len(f)!= 0:
+                     f = handle.read(120)
+                     a = f.split(' ',1)
+                     try:
+                         sentence_list.append(a[1][0:length])
+                     except:
+                         print("\n")
+            correct_count_sum = 0
+            count_sum = 0
+            i = 0
+            for sent in sentence_list:
+                obs = falling_trace_gen(sent)
+                comp_list = keystroke_trace_gen(sent)
+                try :
+                    inference_list = viterbi(obs,states,ave_start_probability,transition_probability,emission_probability)
+                    a , b = compare_list(comp_list, inference_list)
+                    print(comp_list)
+                    print(inference_list)
+                    if a != 0:
+                        i +=1
+                        correct_count_sum += a
+                        count_sum += b
+                    print(f"corret inferenz: {a} total length: {b} accuracy:{a/b}")
+                except:
+                    print("")
+                if i ==20:
+                    break
+            print(f"corret inferenz: {correct_count_sum} total length: {count_sum} accuracy:{correct_count_sum/count_sum}")
+            accuracy[length] = {'inferenz': correct_count_sum,'length':count_sum,'accuracy':correct_count_sum/count_sum}
+        for i in accuracy:
+            print(f"input length {i}:{accuracy[i]}")
 
   
