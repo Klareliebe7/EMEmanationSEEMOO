@@ -455,7 +455,7 @@ if __name__ == '__main__':
         
                 
     
-##################################################################################################################################    
+##############             *    *    *      make inference here      *     *      *                             ################################################    
     obs = [21121121111,21121112111,21111121111,21121111211,21112112111,21121121111,21211211211,21112112111,21111121111,21211212111,21112112111]
     #shakspeare
     viterbi(obs,
@@ -482,7 +482,7 @@ if __name__ == '__main__':
             transition_probability,
             emission_probability)
     
-    ############# evaluation ##########################################################################################
+####################################################### evaluation ##########################################################################################
     accuracy = {}
     for length in [3,5,10,15,20,30,40,50,70,90]:
         with open(test_file_path,'r', encoding='UTF-8') as handle:
@@ -519,6 +519,7 @@ if __name__ == '__main__':
                 break
         print(f"corret inferenz: {correct_count_sum} total length: {count_sum} accuracy:{correct_count_sum/count_sum}")
         accuracy[length] = {'inferenz': correct_count_sum,'length':count_sum,'accuracy':correct_count_sum/count_sum}
-    
-   
+    for i in accuracy:
+        print(f"input length {i}:{accuracy[i]}")
+
   
