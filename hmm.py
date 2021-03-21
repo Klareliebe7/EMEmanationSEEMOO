@@ -3,8 +3,9 @@ from itertools import islice
 from collections import Counter
 
 file_path = "C:/Users/97053/Desktop/Harry Potter.txt"
+test_file_path = "C:/Users/97053/Desktop/originText.txt"
 bksp_rate = 0
-
+[21111212111, 21121112111, 21112112111, 21211212111, 21121112111, 21111112111, 21211212111, 21121121111, 21121211211, 21112112111, 21121121111, 21212112111, 21121121111]
 
 trace_dict = {
 21111111111: {'<non-US-1>'},
@@ -360,7 +361,7 @@ def viterbi(obs, states, start_p, trans_p, emit_p):
                    
 
     print ("The inference hidden states are:\n" + " ".join(opt))
-
+    return list(opt)
 def dptable(V):
 #####################################################################################################################
 # This function is the example function in wikipedia.
@@ -371,6 +372,65 @@ def dptable(V):
     yield " ".join(("%12d" % i) for i in range(len(V)))
     for state in V[0]:
         yield "%.7s: " % state + " ".join("%.7s" % ("%f" % v[state]["prob"]) for v in V)
+
+
+
+
+def falling_trace_gen(string:str):
+#####################################################################################################################
+# This function is used to generate the falling edge trace to evaluate and test the sequence.
+# input string :str
+# output trace list:list
+#####################################################################################################################
+    resultlist = []
+    for c in string.lower():
+        if c != "\n":
+            if c == ' ':
+                tmp = 'Space'
+            else:
+                tmp = c
+            for key, values in trace_dict.items():
+                if tmp in values:
+                    resultlist.append(key)
+                    continue
+    return resultlist
+
+def keystroke_trace_gen(string:str):
+#####################################################################################################################
+# This function is used to generate the keystrokes trace to evaluate and test the sequence.
+# input string:str 
+# output string list:list
+#####################################################################################################################
+    resultlist = []
+    for c in string.lower():
+        if c != "\n":
+            if c == ' ':
+                c = 'Space'
+            resultlist.append(c)
+    return resultlist
+
+
+def compare_list(list1:list, list2:list):
+#####################################################################################################################
+# This function is used to generate the compare result remove shift and Caps_Lock
+# input string:str1, original 
+#              str2 inference 
+# output:same count: int count of same keystrokes
+#        len of total keystrokes
+#####################################################################################################################
+    same_count = 0
+    for i in list2:
+        if i == "Shift":
+            list2.remove("Shift")
+    for i in list2:
+        if i == "Caps_Lock":
+            list2.remove("Caps_Lock")
+    if len(list1) == len(list2):
+        for i, item in enumerate(list1):
+            if item == list2[i]:
+                same_count += 1
+    return same_count , len(list1)   
+
 
 if __name__ == '__main__':
     states, observations, transition_empty, count_matrix = get_trans_mat_and_obs(trace_dict, not_in_table, removed_items)
@@ -383,7 +443,7 @@ if __name__ == '__main__':
     # print(count_matrix)
     #fill transiton matrix based on count matrix & bksp prob
     start_probability, transition_probability = fill_trans_mat(count_matrix,transition_empty,bksp_rate,states)
-    
+    print()
     ave_start_probability = get_ave_start_prob(states)
     
     emission_probability = get_emission_prob(states,observations,trace_dict)
@@ -392,19 +452,21 @@ if __name__ == '__main__':
     observations = tuple(observations)
     
     
+        
+                
     
-###################################################################################################################################    
+##################################################################################################################################    
     obs = [21121121111,21121112111,21111121111,21121111211,21112112111,21121121111,21211211211,21112112111,21111121111,21211212111,21112112111]
     #shakspeare
     viterbi(obs,
             states,
-            ave_start_probability,
+            start_probability,
             transition_probability,
             emission_probability)
     obs = [21121121111, 21121112111, 21111121111, 21121111211, 21112112111, 21121121111, 21211211211, 21112112111, 21111121111, 21211212111, 21112112111, 21211212111, 21211121111, 21111121111, 21121121111, 21211212111, 21121212111, 21112112111, 21211212111, 21121121111, 21212112111, 21211212111, 21121111211, 21211112111, 21121121111, 21112112111, 21211112111, 21111112111, 21211212111, 21112112111]
     viterbi(obs,
             states,
-            ave_start_probability,
+            start_probability,
             transition_probability,
             emission_probability)
     obs =[21211211211, 21111121111, 21121121111, 21121121111, 21211121111, 21112111211, 21211212111, 21121112111]    
@@ -419,3 +481,44 @@ if __name__ == '__main__':
             ave_start_probability,
             transition_probability,
             emission_probability)
+    
+    ############# evaluation ##########################################################################################
+    accuracy = {}
+    for length in [3,5,10,15,20,30,40,50,70,90]:
+        with open(test_file_path,'r', encoding='UTF-8') as handle:
+            f = handle.read(130)
+            sentence_list = []
+            a = f.split(' ',1)
+            sentence_list.append(a[1][0:length])
+            while len(f)!= 0:
+                 f = handle.read(120)
+                 a = f.split(' ',1)
+                 try:
+                     sentence_list.append(a[1][0:length])
+                 except:
+                     print("\n")
+        correct_count_sum = 0
+        count_sum = 0
+        i = 0
+        for sent in sentence_list:
+            obs = falling_trace_gen(sent)
+            comp_list = keystroke_trace_gen(sent)
+            try :
+                inference_list = viterbi(obs,states,ave_start_probability,transition_probability,emission_probability)
+                a , b = compare_list(comp_list, inference_list)
+                print(comp_list)
+                print(inference_list)
+                if a != 0:
+                    i +=1
+                    correct_count_sum += a
+                    count_sum += b
+                print(f"corret inferenz: {a} total length: {b} accuracy:{a/b}")
+            except:
+                print("")
+            if i ==20:
+                break
+        print(f"corret inferenz: {correct_count_sum} total length: {count_sum} accuracy:{correct_count_sum/count_sum}")
+        accuracy[length] = {'inferenz': correct_count_sum,'length':count_sum,'accuracy':correct_count_sum/count_sum}
+    
+   
+  
